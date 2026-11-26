@@ -73,7 +73,7 @@ Update CoreTube through Kodi: install the newer zip the same way. TizenTube's ow
 ./build-coretube.sh test --docker
 ```
 
-Without `--docker`, the tests need Python 3.10 or newer with pytest.
+Without `--docker`, the tests need Python 3.10 or newer with pytest (`python3 -m pip install -r requirements-dev.txt`). GitHub Actions runs them on every pull request.
 
 ## Repository updates
 
