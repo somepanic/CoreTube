@@ -36,7 +36,7 @@ The CoreELEC build folder may already hold other CoreELEC work. CoreTube adds it
 
 ## Install
 
-To install through Kodi and receive updates, add `https://samtheruby.github.io/CoreTube/` as a source in **Settings > File manager > Add source**. Open **Add-ons > Install from zip file**, choose that source, and install the repository ZIP. Enable **Unknown sources** in Kodi's add-on settings if prompted. Then choose **Install from repository > CoreTube Repository > Video add-ons > CoreTube**. Kodi selects the matching package for CoreELEC 21 (ARM) or 22 (AArch64); use only these supported systems.
+To install through Kodi and receive updates, add `https://somepanic.github.io/CoreTube/` as a source in **Settings > File manager > Add source**. Open **Add-ons > Install from zip file**, choose that source, and install the repository ZIP. Enable **Unknown sources** in Kodi's add-on settings if prompted. Then choose **Install from repository > CoreTube Repository > Video add-ons > CoreTube**. Kodi selects the matching package for CoreELEC 21 (ARM) or 22 (AArch64); use only these supported systems.
 
 If you already installed CoreTube from a ZIP, open its add-on information, choose **Versions**, and select CoreTube from **CoreTube Repository** to receive repository updates.
 

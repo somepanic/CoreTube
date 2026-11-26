@@ -109,7 +109,7 @@ class RepositoryTests(unittest.TestCase):
             ):
                 self.assertEqual(directory.attrib["minversion"], f"{major}.0.0")
                 self.assertEqual(directory.attrib["maxversion"], f"{major}.999.999")
-                base = f"https://samtheruby.github.io/CoreTube/{arch}/"
+                base = f"https://somepanic.github.io/CoreTube/{arch}/"
                 self.assertEqual(directory.findtext("info"), base + "addons.xml")
                 self.assertEqual(directory.findtext("datadir"), base)
                 self.assertEqual(directory.findtext("hashes"), "sha256")
