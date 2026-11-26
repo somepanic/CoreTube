@@ -104,12 +104,15 @@ class RepositoryTests(unittest.TestCase):
                 "extension[@point='xbmc.addon.repository']/dir"
             )
             self.assertEqual(len(directories), 2)
-            for directory, arch, major in zip(
-                directories, ["arm", "aarch64"], [21, 22]
+            # the somepanic Kodi repository's lists, which carry CoreTube for each
+            # architecture: Kodi 21 (CoreELEC 21, ARM), Kodi 21.90+ and 22 (AArch64)
+            for directory, (low, high, feed) in zip(
+                directories,
+                [("21.0.0", "21.89.999", "omega"), ("21.90.0", "22.89.999", "piers")],
             ):
-                self.assertEqual(directory.attrib["minversion"], f"{major}.0.0")
-                self.assertEqual(directory.attrib["maxversion"], f"{major}.999.999")
-                base = f"https://somepanic.github.io/CoreTube/{arch}/"
+                self.assertEqual(directory.attrib["minversion"], low)
+                self.assertEqual(directory.attrib["maxversion"], high)
+                base = f"https://somepanic.github.io/{feed}/"
                 self.assertEqual(directory.findtext("info"), base + "addons.xml")
                 self.assertEqual(directory.findtext("datadir"), base)
                 self.assertEqual(directory.findtext("hashes"), "sha256")

@@ -36,9 +36,11 @@ The CoreELEC build folder may already hold other CoreELEC work. CoreTube adds it
 
 ## Install
 
-To install through Kodi and receive updates, add `https://somepanic.github.io/CoreTube/` as a source in **Settings > File manager > Add source**. Open **Add-ons > Install from zip file**, choose that source, and install the repository ZIP. Enable **Unknown sources** in Kodi's add-on settings if prompted. Then choose **Install from repository > CoreTube Repository > Video add-ons > CoreTube**. Kodi selects the matching package for CoreELEC 21 (ARM) or 22 (AArch64); use only these supported systems.
+CoreTube is published in the [somepanic Kodi repository](https://github.com/somepanic/somepanic.github.io). To install through Kodi and receive updates, add `https://somepanic.github.io/` as a source in **Settings > File manager > Add source**. Open **Add-ons > Install from zip file**, choose that source, and install the repository ZIP. Enable **Unknown sources** in Kodi's add-on settings if prompted. Then choose **Install from repository > somepanic > Video add-ons > CoreTube**. Kodi selects the matching package for CoreELEC 21 (ARM) or 22 (AArch64); use only these supported systems.
 
-If you already installed CoreTube from a ZIP, open its add-on information, choose **Versions**, and select CoreTube from **CoreTube Repository** to receive repository updates.
+Already added CoreTube's own repository (`https://somepanic.github.io/CoreTube/`)? Its version 1.0.2 reads the same somepanic lists, so it keeps CoreTube up to date; nothing to change.
+
+If you already installed CoreTube from a ZIP, open its add-on information, choose **Versions**, and select CoreTube from **somepanic** (or **CoreTube Repository**) to receive repository updates.
 
 In Kodi, open **Add-ons**, choose **Install from zip file**, and pick the zip. Then open CoreTube from **Add-ons**. Kodi comes back when you exit CoreTube. The add-on keeps its `browser.tizentube` ID so existing installs retain their settings.
 

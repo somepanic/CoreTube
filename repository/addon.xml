@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="repository.coretube" name="CoreTube Repository" version="1.0.1" provider-name="CoreTube">
+<addon id="repository.coretube" name="CoreTube Repository" version="1.0.2" provider-name="CoreTube">
   <extension point="xbmc.addon.repository">
-    <dir minversion="21.0.0" maxversion="21.999.999">
-      <info>https://somepanic.github.io/CoreTube/arm/addons.xml</info>
-      <checksum verify="sha256">https://somepanic.github.io/CoreTube/arm/addons.xml.sha256</checksum>
-      <datadir>https://somepanic.github.io/CoreTube/arm/</datadir>
+    <!-- the somepanic Kodi repository's lists: Kodi 21 (CoreELEC 21, ARM) -->
+    <dir minversion="21.0.0" maxversion="21.89.999">
+      <info>https://somepanic.github.io/omega/addons.xml</info>
+      <checksum verify="sha256">https://somepanic.github.io/omega/addons.xml.sha256</checksum>
+      <datadir>https://somepanic.github.io/omega/</datadir>
       <hashes>sha256</hashes>
     </dir>
-    <dir minversion="22.0.0" maxversion="22.999.999">
-      <info>https://somepanic.github.io/CoreTube/aarch64/addons.xml</info>
-      <checksum verify="sha256">https://somepanic.github.io/CoreTube/aarch64/addons.xml.sha256</checksum>
-      <datadir>https://somepanic.github.io/CoreTube/aarch64/</datadir>
+    <!-- Kodi 22 and its 21.90+ pre-releases (CoreELEC 22, AArch64) -->
+    <dir minversion="21.90.0" maxversion="22.89.999">
+      <info>https://somepanic.github.io/piers/addons.xml</info>
+      <checksum verify="sha256">https://somepanic.github.io/piers/addons.xml.sha256</checksum>
+      <datadir>https://somepanic.github.io/piers/</datadir>
       <hashes>sha256</hashes>
     </dir>
   </extension>
