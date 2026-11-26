@@ -38,9 +38,7 @@ The CoreELEC build folder may already hold other CoreELEC work. CoreTube adds it
 
 CoreTube is published in the [somepanic Kodi repository](https://github.com/somepanic/somepanic.github.io). To install through Kodi and receive updates, add `https://somepanic.github.io/` as a source in **Settings > File manager > Add source**. Open **Add-ons > Install from zip file**, choose that source, and install the repository ZIP. Enable **Unknown sources** in Kodi's add-on settings if prompted. Then choose **Install from repository > somepanic > Video add-ons > CoreTube**. Kodi selects the matching package for CoreELEC 21 (ARM) or 22 (AArch64); use only these supported systems.
 
-Already added CoreTube's own repository (`https://somepanic.github.io/CoreTube/`)? Its version 1.0.2 reads the same somepanic lists, so it keeps CoreTube up to date; nothing to change.
-
-If you already installed CoreTube from a ZIP, open its add-on information, choose **Versions**, and select CoreTube from **somepanic** (or **CoreTube Repository**) to receive repository updates.
+If you already installed CoreTube from a ZIP, open its add-on information, choose **Versions**, and select CoreTube from **somepanic** to receive repository updates.
 
 In Kodi, open **Add-ons**, choose **Install from zip file**, and pick the zip. Then open CoreTube from **Add-ons**. Kodi comes back when you exit CoreTube. The add-on keeps its `browser.tizentube` ID so existing installs retain their settings.
 
@@ -79,9 +77,7 @@ Without `--docker`, the tests need Python 3.10 or newer with pytest.
 
 ## Repository updates
 
-GitHub Pages publishes the latest stable release automatically when a release is published or the repository setup changes on `main`. Upload both architecture ZIPs and `SHA256SUMS` before publishing each release. The **Publish Kodi repository** GitHub Actions workflow can also be run manually.
-
-To check the repository locally, download those three release assets into a folder and run `python3 tools/build_repository.py ASSET_FOLDER out/pages`. The output folder must not already exist. The builder verifies both checksums and architectures before creating the site.
+The [somepanic Kodi repository](https://github.com/somepanic/somepanic.github.io) publishes CoreTube's latest stable GitHub release: it checks for a new one every 6 hours. Upload both architecture ZIPs (`browser.tizentube-<version>-arm.zip` and `browser.tizentube-<version>-aarch64.zip`) and `SHA256SUMS` before publishing each release. The repository checks both checksums, and that each launcher is built for its architecture. To publish a release at once, run **Publish the Kodi repository** in that repository's Actions.
 
 ## License
 
