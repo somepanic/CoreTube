@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: samtheruby <peasea1012@gmail.com>
+Date: Fri, 27 Nov 2026 05:00:00 +0000
+Subject: [PATCH] fix(cobalt): load TizenTube's script only into the YouTube
+ page
+
+TizenTube's script was added to every HTML document as it finished
+loading. Cobalt's splash screen is a page of its own, so each start
+downloaded and ran a second copy there (about 690 KB), which failed at
+once without TizenTube's settings: "Config read failed" and "Uncaught
+TypeError: Cannot convert undefined or null to object". Frames inside
+a page would get a copy each too.
+
+The script and the jsDelivr reachability check now go only into the
+main frame of https://www.youtube.com, the page TizenTube is written for.
+---
+  third_party/blink/renderer/core/dom/document.cc | 9 +++++++--
+  1 file changed, 7 insertions(+), 2 deletions(-)
+diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink/renderer/core/dom/document.cc
+index 285aba907e8..e7df084390c 100644
+--- a/third_party/blink/renderer/core/dom/document.cc
++++ b/third_party/blink/renderer/core/dom/document.cc
+@@ -4010,8 +4010,13 @@ void Document::ImplicitClose() {
+ 
+   load_event_progress_ = kLoadEventInProgress;
+ 
+-  // TizenTube userscript injection.
+-  if (IsA<HTMLDocument>(this)) {
++  // TizenTube userscript injection, into the YouTube page only. Every HTML
++  // document closes here: Cobalt's splash screen (h5vcc-embedded://splash.html,
++  // a page of its own) and frames inside a page would each run another copy,
++  // which fails there without TizenTube's settings.
++  const KURL& page_url = Url();
++  if (IsA<HTMLDocument>(this) && GetFrame() && GetFrame()->IsMainFrame() &&
++      page_url.ProtocolIs("https") && page_url.Host() == "www.youtube.com") {
+     Element* script_container = head();
+ 
+     if (!script_container) {
+-- 
+2.47.3
