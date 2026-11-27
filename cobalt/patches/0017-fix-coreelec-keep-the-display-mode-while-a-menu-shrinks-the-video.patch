@@ -1,0 +1,154 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: samtheruby <peasea1012@gmail.com>
+Date: Fri, 27 Nov 2026 04:40:00 +0000
+Subject: [PATCH] fix(coreelec): keep the display mode while a menu shrinks the
+ video
+
+Auto frame rate kept a video's mode only while the video filled the
+whole window. YouTube's settings menu shrinks the playing video to a
+window beside it, so the display went back to the menu's mode 5 seconds
+later and switched again when the menu closed: each switch blanks the
+TV and holds playback, which showed as stutter after every menu.
+Videos that are not 16:9 (4:3 with bars at the sides, 21:9 with bars
+above and below) never filled the window, so they never switched.
+
+A video now counts as full screen when it fills the window one way and
+sits in the middle the other way. Once on screen it stays there at any
+size until it has no size or its player goes, as Kodi's "On start/stop"
+keeps the rate while its menus cover a playing video. Home screen
+previews still never switch: they are a window from the start.
+---
+  .../rdk/coreelec/tests/coreelec_display_test.cc       | 17 +++++++++++++++++
+  .../starboard/rdk/shared/coreelec_display.cc          | 19 +++++++++++++++++--
+  .../starboard/rdk/shared/coreelec_display.h           | 12 +++++++++++-
+  .../starboard/rdk/shared/player/player_internal.cc    | 11 ++++++-----
+  4 files changed, 51 insertions(+), 8 deletions(-)
+diff --git a/starboard/contrib/rdk/src/third_party/starboard/rdk/coreelec/tests/coreelec_display_test.cc b/starboard/contrib/rdk/src/third_party/starboard/rdk/coreelec/tests/coreelec_display_test.cc
+index 45cb2d0efa3..b5a7a07729f 100644
+--- a/starboard/contrib/rdk/src/third_party/starboard/rdk/coreelec/tests/coreelec_display_test.cc
++++ b/starboard/contrib/rdk/src/third_party/starboard/rdk/coreelec/tests/coreelec_display_test.cc
+@@ -249,6 +249,23 @@ int main() {
+   assert(!FillsWindow(0, 0, 1920, 1080));            // window size not known yet
+   SetWindowSize(1920, 1080);
+   assert(FillsWindow(0, 0, 1920, 1080) && !FillsWindow(100, 100, 640, 360));
++  // A full-screen video narrower or wider than the window fills it one way and
++  // sits in the middle the other way: 4:3 with bars at the sides, 21:9 with bars
++  // above and below. Off the middle it is a window, not full screen.
++  assert(CoversWindow(240, 0, 1440, 1080, 1920, 1080));
++  assert(CoversWindow(0, 140, 1920, 800, 1920, 1080));
++  assert(CoversWindow(239, 0, 1442, 1080, 1920, 1080));  // rounding
++  assert(!CoversWindow(0, 0, 1440, 1080, 1920, 1080));   // full height, at the left
++  assert(!CoversWindow(0, 280, 1920, 800, 1920, 1080));  // full width, low down
++  // Once a video is on screen it stays there at any size, such as the window
++  // YouTube shrinks it to for its settings menu, until it has no size or its
++  // player goes. A video that never filled the window does not get there.
++  assert(StaysOnScreen(false, 0, 0, 1920, 1080));
++  assert(StaysOnScreen(false, 240, 0, 1440, 1080));
++  assert(!StaysOnScreen(false, 54, 219, 1146, 645));      // a preview window
++  assert(StaysOnScreen(true, 54, 219, 1146, 645));        // the settings menu
++  assert(!StaysOnScreen(true, 0, 0, 0, 0));
++  assert(!StaysOnScreen(true, 54, 219, 1146, 0));
+ 
+   // The video's rectangle in the sink's pixels. A framebuffer window leaves it in
+   // window pixels (the sink applies fb0's scaler); a DRM window (one with a mode
+diff --git a/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.cc b/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.cc
+index 139b4a173ba..8527ea7d9aa 100644
+--- a/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.cc
++++ b/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.cc
+@@ -580,8 +580,16 @@ void ResetFrameRate() {
+ }
+ 
+ bool CoversWindow(int x, int y, int width, int height, int window_width, int window_height) {
+-  return window_width > 0 && window_height > 0 && x <= 0 && y <= 0 &&
+-         x + width >= window_width && y + height >= window_height;
++  if (window_width <= 0 || window_height <= 0) {
++    return false;
++  }
++  // Within this many pixels of the window's middle: the page rounds the bars.
++  constexpr int kCentreSlack = 2;
++  const bool fills_width = x <= 0 && x + width >= window_width;
++  const bool fills_height = y <= 0 && y + height >= window_height;
++  const bool centred_x = std::abs(2 * x + width - window_width) <= 2 * kCentreSlack;
++  const bool centred_y = std::abs(2 * y + height - window_height) <= 2 * kCentreSlack;
++  return (fills_width && (fills_height || centred_y)) || (fills_height && centred_x);
+ }
+ 
+ namespace {
+@@ -598,6 +606,13 @@ bool FillsWindow(int x, int y, int width, int height) {
+   return CoversWindow(x, y, width, height, g_window_width, g_window_height);
+ }
+ 
++bool StaysOnScreen(bool on_screen, int x, int y, int width, int height) {
++  if (width <= 0 || height <= 0) {
++    return false;
++  }
++  return on_screen || FillsWindow(x, y, width, height);
++}
++
+ void SetVideoOnScreen(bool on_screen) {
+   static int videos = 0;  // guarded by g_frame_rate_mutex
+   std::lock_guard<std::mutex> lock(g_frame_rate_mutex);
+diff --git a/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.h b/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.h
+index b046d0818cd..bc28be3de2e 100644
+--- a/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.h
++++ b/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/coreelec_display.h
+@@ -153,7 +153,9 @@ void SetVideoOnScreen(bool on_screen);
+ // The remote's back key was pressed (AutoFrameRate::BackPressed).
+ void BackPressed();
+ 
+-// Whether a video at these bounds covers a |window_width|x|window_height| window.
++// Whether a video at these bounds is full screen in a |window_width|x|window_height|
++// window: it fills the window one way and sits in the middle the other way, so a
++// 4:3 video with bars at the sides or a 21:9 one with bars above and below counts.
+ bool CoversWindow(int x, int y, int width, int height, int window_width, int window_height);
+ 
+ // The application window's size, for FillsWindow.
+@@ -163,6 +165,14 @@ void SetWindowSize(int width, int height);
+ // before SetWindowSize).
+ bool FillsWindow(int x, int y, int width, int height);
+ 
++// Whether a player's video at these bounds is on screen for auto frame rate, given
++// whether it was (|on_screen|). It gets there by filling the window, so a home
++// screen preview never switches the display; once there it stays at any size, as
++// Kodi keeps the rate while its menus cover a playing video, so the window YouTube
++// shrinks it to for its settings menu keeps the mode. It goes with its size, or
++// when the player goes.
++bool StaysOnScreen(bool on_screen, int x, int y, int width, int height);
++
+ // How a switch reaches the display. Without a setter it is written to
+ // /sys/class/display (framebuffer windows); a DRM window, where those writes are
+ // ignored, installs one. Returns false when the switch cannot be made.
+diff --git a/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/player/player_internal.cc b/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/player/player_internal.cc
+index 48c697fa63b..4525362399c 100644
+--- a/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/player/player_internal.cc
++++ b/starboard/contrib/rdk/src/third_party/starboard/rdk/shared/player/player_internal.cc
+@@ -1709,7 +1709,7 @@ class PlayerImpl : public Player {
+ 
+   bool enforce_sw_decoders_ { false };
+   bool audio_passthrough_ { false };  // COREELEC: audio goes out as a bitstream
+-  std::atomic<bool> on_screen_ { false };  // COREELEC: the video fills the screen
++  std::atomic<bool> on_screen_ { false };  // COREELEC: see coreelec::StaysOnScreen
+   std::atomic<bool> held_for_switch_ { false };  // COREELEC: paused by a mode switch
+   // The bounds the sink has, and the display mode they were placed for (COREELEC).
+   std::mutex bounds_mutex_;
+@@ -3074,12 +3074,13 @@ void PlayerImpl::GetInfo(SbPlayerInfo* out_player_info) {
+ void PlayerImpl::SetBounds(int zindex, const ::starboard::Rect& rect) {
+   GST_TRACE_OBJECT(pipeline_, "Set Bounds: %d %d %d %d %d", zindex, rect.x, rect.y, rect.size.width, rect.size.height);
+ #if defined(COREELEC)
+-  // A full-screen video keeps the refresh rate auto frame rate chose; a home
+-  // screen preview (a window) does not.
++  // A video that filled the screen keeps the refresh rate auto frame rate chose,
++  // also in the window a menu shrinks it to; a home screen preview (a window
++  // from the start) does not.
+   {
+     namespace coreelec = ::third_party::starboard::rdk::shared::coreelec;
+-    const bool on_screen =
+-        coreelec::FillsWindow(rect.x, rect.y, rect.size.width, rect.size.height);
++    const bool on_screen = coreelec::StaysOnScreen(
++        on_screen_.load(), rect.x, rect.y, rect.size.width, rect.size.height);
+     if (on_screen_.exchange(on_screen) != on_screen)
+       coreelec::SetVideoOnScreen(on_screen);
+   }
+-- 
+2.47.3
+
